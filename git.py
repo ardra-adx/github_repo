@@ -1,20 +1,3 @@
-#!/usr/bin/env python3
-"""
-GitHub Repository Analyzer
---------------------------------
-  • Counts total lines of code (selected extensions or *all* text files)
-  • Lists languages used (bytes & %)
-  • Reports contributor count
-  • Aggregates commits per ISO week
-  • Prints basic repository facts
-
-Usage
------
-$ pip install PyGithub
-$ export GITHUB_TOKEN=<your‑token>           # optional but recommended
-$ python github_repo_analyzer.py tensorflow/tensorflow
-"""
-
 import argparse
 import base64
 import os
@@ -24,7 +7,6 @@ from datetime import datetime, timezone
 
 from github import Github, GithubException
 
-# ---------- configurable -------------
 DEFAULT_EXTENSIONS = {
     ".py", ".js", ".ts", ".java", ".c", ".cpp",
     ".go", ".rb", ".rs", ".php", ".html", ".css",
@@ -42,8 +24,6 @@ def fetch_repo(client, full_name: str):
     except GithubException as err:
         sys.exit(f"Could not fetch '{full_name}': {err}")
 
-
-# ---------- commits per week ----------
 def commits_per_week(repo):
     """Return dict {'YYYY-Www': count} using ISO calendar weeks."""
     counts = defaultdict(int)
@@ -57,8 +37,6 @@ def commits_per_week(repo):
         print(f"Commit history truncated: {err}")
     return dict(counts)
 
-
-# ---------- lines of code -------------
 def list_all_contents(repo, path=""):
     """Breadth‑first traversal of the Contents API (rate‑limit‑friendly)."""
     queue, files = [path], []
@@ -83,9 +61,7 @@ def count_loc(repo, extensions=DEFAULT_EXTENSIONS):
         except Exception:
             continue  # skip binary or decoding failures
     return total
-
-
-# ---------- pretty printing -----------
+  
 def human_date(dt):
     return dt.strftime("%Y-%m-%d")
 
@@ -108,7 +84,6 @@ def main():
     gh = get_github_client()
     repo = fetch_repo(gh, args.repo)
 
-    # ----- basic facts -----
     print_banner(" Repository Info")
     print(f"Name           : {repo.full_name}")
     print(f"Description    : {repo.description or '—'}")
@@ -117,14 +92,12 @@ def main():
     print(f"Stars        : {repo.stargazers_count}")
     print(f"Forks        : {repo.forks_count}")
 
-    # ----- contributors -----
     try:
         contributors = repo.get_contributors().totalCount
     except GithubException:
         contributors = "Unavailable"
-    print(f"👥 Contributors : {contributors}")
+    print(f"Contributors : {contributors}")
 
-    # ----- languages -----
     print_banner("Languages Used")
     try:
         langs = repo.get_languages()
@@ -135,14 +108,12 @@ def main():
     except GithubException as err:
         print(f" {err}")
 
-    # ----- commits per week -----
-    print_banner(" Commits per ISO Week")
+  print_banner(" Commits per ISO Week")
     weekly = commits_per_week(repo)
     for week in sorted(weekly):
         print(f"{week}: {weekly[week]}")
 
-    # ----- lines of code -----
-    print_banner(" Lines of Code")
+print_banner(" Lines of Code")
     ext_filter = set() if args.all_ext else DEFAULT_EXTENSIONS
     loc = count_loc(repo, ext_filter)
     ext_note = "all file types" if args.all_ext else "selected extensions"
